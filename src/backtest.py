@@ -1,27 +1,32 @@
 # src/backtest.py
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
-def backtest_portfolio(price_df, weights, rebalance_period="M"):
-    returns = price_df.pct_change().dropna()
-    weights_series = pd.Series(weights)
+def backtest_portfolio(price_data, weights):
+    """
+    Simula o valor acumulado de uma carteira com pesos fixos ao longo do tempo.
+    """
+    # Calcular retornos diários
+    returns = price_data.pct_change().dropna()
 
-    # Normalize and resample
-    resampled_prices = price_df.resample(rebalance_period).last()
-    resampled_returns = resampled_prices.pct_change().dropna()
+    # Garantir que os pesos estão normalizados
+    weights = pd.Series(weights)
+    weights = weights / weights.sum()
 
-    weighted_returns = (resampled_returns * weights_series).sum(axis=1)
-    cumulative = (1 + weighted_returns).cumprod()
+    # Calcular o retorno diário da carteira
+    portfolio_returns = (returns * weights).sum(axis=1)
 
+    # Valor acumulado da carteira (começando com 100)
+    cumulative_returns = (1 + portfolio_returns).cumprod() * 100
+
+    # Plot
     plt.figure(figsize=(10, 5))
-    plt.plot(cumulative, label="Backtest Portfolio")
-    plt.title("Portfolio Backtest")
+    plt.plot(cumulative_returns, label="Portfolio")
+    plt.title("Backtest: Portfolio Cumulative Returns")
     plt.xlabel("Date")
-    plt.ylabel("Cumulative Return")
-    plt.legend()
+    plt.ylabel("Portfolio Value")
     plt.grid(True)
+    plt.legend()
     plt.tight_layout()
     plt.show()
-

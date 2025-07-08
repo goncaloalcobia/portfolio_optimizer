@@ -10,6 +10,7 @@ TICKERS = ["AAPL", "MSFT", "GOOG", "AMZN", "NVDA", "BTC-USD"]
 START = "2020-01-01"
 END = "2025-01-01"
 METHOD = "sharpe"  # Options: 'sharpe', 'min_volatility', 'cvar'
+BACKTEST = True # Set to False to skip backtesting
 
 # === PIPELINE ===
 if __name__ == "__main__":
@@ -26,5 +27,6 @@ if __name__ == "__main__":
 
     plot_efficient_frontier(data, method=METHOD, highlight_weights=weights)
 
-    # Optionally run backtest
-    # backtest_portfolio(data, weights)
+    if BACKTEST:
+        print("\nStarting backtest...")
+        backtest_portfolio(data, weights)
