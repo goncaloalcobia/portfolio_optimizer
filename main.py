@@ -1,3 +1,7 @@
+from config import (
+    TICKERS, TRAIN_START, TRAIN_END, TEST_START, TEST_END,
+    METHOD, BACKTEST, USE_MONTE_CARLO, RISK_AVERSION
+)
 from src.data_loader import load_data
 from src.optimizer import optimize_portfolio
 from src.backtest import backtest_portfolio
@@ -5,18 +9,6 @@ from src.plots import plot_efficient_frontier
 from src.MonteCarlo import monte_carlo_simulation
 from pypfopt import expected_returns, risk_models
 import numpy as np
-
-# === CONFIG ===
-TICKERS = ["AAPL", "MSFT", "GOOG", "AMZN", "NVDA", "TSLA", "PLTR", "META", "NFLX", "AMD"]  
-TRAIN_START = "2020-01-01"
-TRAIN_END = "2023-12-31"
-TEST_START = "2024-01-01"
-TEST_END = "2025-01-01"
-METHOD = "quadratic_utility" # Options: 'sharpe', 'min_volatility', 'efficient_risk', 'efficient_return'
-RISK_AVERSION = 5.0  
-BACKTEST = True  # Set to False to skip backtesting
-USE_MONTE_CARLO = False  # Set to True to use Monte Carlo simulation for optimization
-
 
 # === PIPELINE ===
 if __name__ == "__main__":

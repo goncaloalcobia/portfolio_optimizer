@@ -18,12 +18,14 @@ A Python-based quantitative finance project to build, optimize, and evaluate inv
 
 ```text
 portfolio_optimizer/
-├── main.py              # Entry point
+├── main.py              # Ponto de entrada
+├── config.py            # Configuração do utilizador
 └── src/
-    ├── data_loader.py   # Data loading and transformation
-    ├── optimizer.py     # Optimization algorithms
-    ├── backtest.py      # Portfolio performance simulation
-    └── plots.py         # Visualizations
+    ├── data_loader.py
+    ├── optimizer.py
+    ├── backtest.py
+    ├── plots.py
+    └── MonteCarlo.py    
 ```
 
 ---
@@ -41,13 +43,19 @@ pip install -r requirements.txt
 ---
 
 ## 📈 Usage
+
+The portfolio configuration, date ranges, and optimization method are set in the `config.py`
 ```python
-TICKERS = ["AAPL", "MSFT", "BTC-USD"]
-START = "2020-01-01"
-END = "2025-01-01"
-METHOD = "sharpe"  # ou 'min_volatility'
+TICKERS = ["AAPL", "MSFT", "GOOG", "AMZN", "NVDA", "TSLA"]
+TRAIN_START = "2020-01-01"
+TRAIN_END = "2023-12-31"
+TEST_START = "2024-01-01"
+TEST_END = "2025-01-01"
+METHOD = "sharpe"  # Options: 'sharpe', 'min_volatility', 'efficient_risk', 'efficient_return', 'quadratic_utility'
+USE_MONTE_CARLO = False
+BACKTEST = True
 ```
-Depois corre:
+Simply modify the values in `config.py` to customize the optimization process without touching `main.py`. Then run:
 ```bash
 python main.py
 ```
