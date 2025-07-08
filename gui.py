@@ -1,85 +1,123 @@
-# gui.py
-
 import tkinter as tk
-from tkinter import messagebox, Toplevel, Label, Button
-from datetime import datetime
-from PIL import Image, ImageTk
-import matplotlib.pyplot as plt
-import io
+from tkinter import messagebox
+import subprocess
 
-from src.data_loader import load_data
-from src.optimizer import optimize_portfolio
-from src.plots import plot_efficient_frontier
-from src.backtest import backtest_portfolio
+# === Modo default com tickers predefinidos ===
+DEFAULT = True
+DEFAULT_TICKERS = ['AAPL', 'MSFT', 'GOOG', 'AMZN', 'NVDA', 'TSLA', 'PLTR', 'META', 'NFLX', 'AMD']
 
-def run_optimizer():
-    tickers = ticker_entry.get().strip().upper().split()
-    start_date = start_entry.get().strip()
-    end_date = end_entry.get().strip()
-    method = method_var.get()
-    do_backtest = backtest_var.get()
+tickers = []
 
+def update_ticker_fields():
+    for widget in ticker_frame.winfo_children():
+        widget.destroy()
+    tickers.clear()
+
+    if DEFAULT:
+        entries = DEFAULT_TICKERS
+    else:
+        try:
+            n = int(num_tickers_entry.get())
+            entries = [""] * n
+            entries[0] = "AAPL"  # exemplo
+        except ValueError:
+            messagebox.showerror("Erro", "Número de ações inválido")
+            return
+
+    for i, val in enumerate(entries):
+        tk.Label(ticker_frame, text=f"Ticker {i+1}:").grid(row=i, column=0, sticky="w")
+        entry = tk.Entry(ticker_frame)
+        entry.insert(0, val)
+        entry.grid(row=i, column=1)
+        tickers.append(entry)
+
+def run_optimization():
     try:
-        data = load_data(tickers, start=start_date, end=end_date)
-        weights, ef = optimize_portfolio(data, method=method)
+        ticker_list = [e.get().strip().upper() for e in tickers if e.get().strip()]
+        if not ticker_list:
+            raise ValueError("Pelo menos um ticker é necessário.")
 
-        # Cria novo gráfico e guarda como imagem em memória
-        fig = plot_efficient_frontier(data, weights, ef)  # Removido show=False
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png')
-        buf.seek(0)
-        img = Image.open(buf)
-        photo = ImageTk.PhotoImage(img)
+        train_start = train_start_entry.get()
+        train_end = train_end_entry.get()
+        test_start = test_start_entry.get()
+        test_end = test_end_entry.get()
+        method = method_var.get()
+        backtest = backtest_var.get()
+        use_monte_carlo = mc_var.get()
+        risk_aversion = float(risk_aversion_entry.get())
 
-        # Nova janela
-        result_window = Toplevel(root)
-        result_window.title("Portfolio Results")
+        with open("config.py", "w") as f:
+            f.write("TICKERS = " + str(ticker_list) + "\n")
+            f.write(f'TRAIN_START = "{train_start}"\n')
+            f.write(f'TRAIN_END = "{train_end}"\n')
+            f.write(f'TEST_START = "{test_start}"\n')
+            f.write(f'TEST_END = "{test_end}"\n')
+            f.write(f'METHOD = "{method}"\n')
+            f.write(f'BACKTEST = {backtest}\n')
+            f.write(f'USE_MONTE_CARLO = {use_monte_carlo}\n')
+            f.write(f'RISK_AVERSION = {risk_aversion}\n')
 
-        # Mostra imagem
-        label_img = Label(result_window, image=photo)
-        label_img.image = photo  # manter referência
-        label_img.pack()
-
-        # Mostra alocações
-        allocation_text = "\n".join([f"{k}: {round(v * 100, 2)}%" for k, v in weights.items()])
-        Label(result_window, text=allocation_text, font=("Arial", 12), pady=10).pack()
-
-        # Backtest
-        if do_backtest:
-            backtest_portfolio(data, weights)
-
-        # Botão de voltar
-        Button(result_window, text="Fechar", command=result_window.destroy).pack(pady=10)
-
+        subprocess.run(["python", "main.py"])
     except Exception as e:
         messagebox.showerror("Erro", str(e))
-
 
 
 # GUI
 root = tk.Tk()
 root.title("Portfolio Optimizer")
 
-tk.Label(root, text="Tickers (separados por espaço):").grid(row=0, column=0, sticky='w')
-ticker_entry = tk.Entry(root, width=50)
-ticker_entry.grid(row=0, column=1)
+if not DEFAULT:
+    tk.Label(root, text="Number of Tickers:").grid(row=0, column=0, sticky="w")
+    num_tickers_entry = tk.Entry(root)
+    num_tickers_entry.insert(0, "10")
+    num_tickers_entry.grid(row=0, column=1)
 
-tk.Label(root, text="Start Date (YYYY-MM-DD):").grid(row=1, column=0, sticky='w')
-start_entry = tk.Entry(root)
-start_entry.grid(row=1, column=1)
+    tk.Button(root, text="Update Ticker Fields", command=update_ticker_fields).grid(row=0, column=2, padx=5)
 
-tk.Label(root, text="End Date (YYYY-MM-DD):").grid(row=2, column=0, sticky='w')
-end_entry = tk.Entry(root)
-end_entry.grid(row=2, column=1)
+ticker_frame = tk.Frame(root)
+ticker_frame.grid(row=1, column=0, columnspan=3, pady=5)
 
-tk.Label(root, text="Optimization Method:").grid(row=3, column=0, sticky='w')
-method_var = tk.StringVar(value="sharpe")
-tk.OptionMenu(root, method_var, "sharpe", "min_volatility").grid(row=3, column=1, sticky='w')
+# Outros campos
+tk.Label(root, text="Train Start:").grid(row=2, column=0, sticky="w")
+train_start_entry = tk.Entry(root)
+train_start_entry.insert(0, "2020-01-01")
+train_start_entry.grid(row=2, column=1)
 
-backtest_var = tk.BooleanVar()
-tk.Checkbutton(root, text="Run backtest after optimization", variable=backtest_var).grid(row=4, column=1, sticky='w')
+tk.Label(root, text="Train End:").grid(row=3, column=0, sticky="w")
+train_end_entry = tk.Entry(root)
+train_end_entry.insert(0, "2023-12-31")
+train_end_entry.grid(row=3, column=1)
 
-tk.Button(root, text="Run Optimizer", command=run_optimizer, bg="green", fg="white").grid(row=5, column=1, pady=10)
+tk.Label(root, text="Test Start:").grid(row=4, column=0, sticky="w")
+test_start_entry = tk.Entry(root)
+test_start_entry.insert(0, "2024-01-01")
+test_start_entry.grid(row=4, column=1)
+
+tk.Label(root, text="Test End:").grid(row=5, column=0, sticky="w")
+test_end_entry = tk.Entry(root)
+test_end_entry.insert(0, "2025-01-01")
+test_end_entry.grid(row=5, column=1)
+
+tk.Label(root, text="Optimization Method:").grid(row=6, column=0, sticky="w")
+method_var = tk.StringVar(root)
+method_var.set("quadratic_utility")
+method_menu = tk.OptionMenu(root, method_var, "sharpe", "min_volatility", "efficient_risk", "efficient_return", "quadratic_utility")
+method_menu.grid(row=6, column=1, sticky="w")
+
+backtest_var = tk.BooleanVar(value=True)
+tk.Checkbutton(root, text="Enable Backtest", variable=backtest_var).grid(row=7, column=1, sticky="w")
+
+mc_var = tk.BooleanVar(value=False)
+tk.Checkbutton(root, text="Use Monte Carlo", variable=mc_var).grid(row=8, column=1, sticky="w")
+
+tk.Label(root, text="Risk Aversion (only for quadratic_utility):").grid(row=9, column=0, sticky="w")
+risk_aversion_entry = tk.Entry(root)
+risk_aversion_entry.insert(0, "3.0")
+risk_aversion_entry.grid(row=9, column=1)
+
+tk.Button(root, text="Run Optimization", command=run_optimization, bg="green", fg="white").grid(row=10, column=1, pady=10)
+
+# Inicializa tickers
+update_ticker_fields()
 
 root.mainloop()
-
