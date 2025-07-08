@@ -35,8 +35,25 @@ portfolio_optimizer/
 # Clone the repo
 git clone git@github.com:goncaloalcobia/portfolio_optimizer.git
 cd portfolio_optimizer
+```
 
-# Install dependencies
+### 🔧 Install dependencies with Python or Anaconda:
+
+### a) With Python + pip
+```bash
+pip install -r requirements.txt
+```
+
+### b) With Anaconda (recommended)
+```bash
+# Create a new environment
+conda create -n PO python=3.10 -y
+conda activate PO
+
+# Install pip inside conda
+conda install pip -y
+
+# Install requirements
 pip install -r requirements.txt
 ```
 
